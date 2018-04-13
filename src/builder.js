@@ -1,5 +1,5 @@
 'use strict'
-import {cb} from './utils/decorators'
+import {cb, test} from './utils/decorators'
 
 export default class Builder {
 
@@ -9,13 +9,16 @@ export default class Builder {
 
   tableName = null
 
-  @cb('this')
+  @cb()
   table (name) {
     this.tableName = name
+    return this.tableName
   }
 
-  
-  where () {}
+  @test()
+  where () {
+    console.log('where')
+  }
   orWhere () {}
   lists () {}
   limit () {}
