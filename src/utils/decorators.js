@@ -12,7 +12,7 @@ export function cb (params) {
       // 运行原来的函数
       oldFn.apply(this, arguments)
       // 返回指定值，默认返回当前对象
-      return params || target
+      return params || this
     }
     return decorator
   }
