@@ -1,4 +1,4 @@
-const Builder = require('./dist').default
+const Builder = require('./index.js')
 const mysql = require('mysql')
 
 
@@ -10,26 +10,43 @@ var db = mysql.createConnection({
 })
 
 
+
 let b = new Builder({connect: db})
 
 let result = b.table('users')
-  .where({
-    name: {
-      $in: ['admin', 'lisi']
-    }
-  })
-  .orderBy({
-    age: 'desc',
-    sex: 'asc'
-  })
-  .groupBy(['name', 'age'])
-  .select()
+  .join('posts', 'users.id', '=', 'posts.userId')
+  .leftJoin('posts as p2', 'users.id', '=', 'p2.userId')
+  // .where({
+  //   name: {
+  //     $in: ['admin', 'lisi']
+  //   }
+  // })
+  // .orderBy({
+  //   age: 'desc',
+  //   sex: 'asc'
+  // })
+  // .groupBy(['name', 'age'])
+  // .having({
+  //   test: {
+  //     $gt: 20,
+  //     $lt: 40
+  //   },
+  //   age: 23
+  // })
+
+  // .select(['users.name', 'sex as test', 'users.sex as test2', Builder.raw('now() as now')])
+  // .select(['*', Builder.raw('age + 1 as test')])
+  // .where({
+  //   id: 1001
+  // })
+  // .select(['id', 'name', 'sex'])
+  // .limit(100, 10)
   // .update({
   //   sex: 1,
   //   age: 22
   // })
   // .delete()
-  // .select()
+  .select()
   // .exec()
   // .then((result, fields) => {
   //   console.log(result)
@@ -60,9 +77,23 @@ let sql = b.toString()
 
 console.log(sql)
 
-// db.query(sql, (err, result) => {
-//   if (err) throw err
-//   console.log(result)
+let sql2 = Builder.query('select * from users where name = :name', {name: 'test'})
 
-//   db.destroy()
-// })
+console.log(sql2)// select * from users where name = 'test'
+
+
+// let b2 = Builder.table('users', {connect: db})
+//   .orderBy({
+//     name: 'desc',
+//     age: 'asc'
+//   })
+//   .select()
+//   .exec()
+//   .then(result => {
+//     console.log(result)
+//   })
+//   .catch(err => {
+//     console.log('err:', err)
+//   })
+
+// console.log(b2.toString())

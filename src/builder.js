@@ -3,6 +3,47 @@ import SqlString from 'sqlstring'
 import {cb, test} from './utils/decorators'
 import operators from './utils/operators'
 
+function makeWhere (conditions = {}) {
+  let conds = []
+  for (let key in conditions) {
+    if (typeof conditions[key] === 'object' && !(conditions[key] instanceof Date)) {
+      for (let op in conditions[key]) {
+
+        if (typeof operators[op] === 'function') {
+          conds.push(`${SqlString.escapeId(key)} ${operators[op](conditions[key][op])}`)
+        } else {
+          console.warn(`\'${op}\' operator symbol is not defined.`)
+        }
+      }
+    } else {
+      conds.push(`${SqlString.escapeId(key)} = ${SqlString.escape(conditions[key])}`)
+    }
+  }
+  return conds
+}
+
+function makeField (fieldString) {
+  let chunk = fieldString
+  if (typeof chunk === 'object' && typeof chunk.toSql === 'function') {
+    return chunk.toSql()
+  }
+  // 去掉两边空格
+  chunk = chunk.replace(/^\s*|\s*$/g, '')
+  // users.name as test
+  if (/\w+ +as +\w+/.test(chunk)) {
+    let chs = chunk.split(/ +as +/)
+    return makeField(chs[0]) + ' as ' + SqlString.escapeId(chs[1])
+  }
+
+  // users.name
+  if (/\w+\.\w+/.test(chunk)) {
+    let chs = chunk.split('.')
+    return SqlString.escapeId(chs[0]) + '.' + SqlString.escapeId(chs[1])
+  }
+  // name
+  return SqlString.escapeId(chunk)
+}
+
 export default class Builder {
 
   constructor (options = {}) {
@@ -14,30 +55,48 @@ export default class Builder {
     this._where = ''
     this._limit = ''
     this._sql = ''
+    this._order = ''
+    this._group = ''
+    this._having = ''
+    this._fields = ''
+    this._insert = ''
+    this._update = ''
+  }
+  static raw (sql) {
+    if (typeof sql !== 'string') {
+      throw new TypeError('argument sql must be a string');
+    }
+    return {
+      toSql () {return sql}
+    }
+  }
+  static table (name, options = {}) {
+    if (!name) throw new Error('Table name is not found.')
+
+    let builder = new Builder({name, ...options})
+    builder._tableName = name
+
+    return builder
+  }
+
+  static query (sql, params) {
+    if (!params) return sql
+    return sql.replace(/\:(\w+)/g, function (txt, key) {
+      if (params.hasOwnProperty(key)) {
+        return SqlString.escape(params[key])
+      }
+      return txt
+    })
   }
 
   @cb()
-  table (name) {
+  table (name, options = {}) {
     this._tableName = SqlString.escapeId(name)
   }
 
   @cb()
   where (conditions = {}) {
-    let conds = []
-    for (let key in conditions) {
-      if (typeof conditions[key] === 'object' && !(conditions[key] instanceof Date)) {
-        for (let op in conditions[key]) {
-
-          if (typeof operators[op] === 'function') {
-            conds.push(`${SqlString.escapeId(key)} ${operators[op](conditions[key][op])}`)
-          } else {
-            console.warn(`\'${op}\' operator symbol is not defined.`)
-          }
-        }
-      } else {
-        conds.push(`${SqlString.escapeId(key)} = ${SqlString.escape(conditions[key])}`)
-      }
-    }
+    let conds = makeWhere(conditions)
     this._where = 'where ' + conds.join(' and ')
   }
 
@@ -45,14 +104,25 @@ export default class Builder {
   limit (limit = 1, offset = 0) {
     this._limit = `limit ${limit}`
     if (offset) {
-      this._limit += `offset ${offset}`
+      this._limit += ` offset ${offset}`
     }
   }
 
-  // distinct () {}
+  @cb()
+  join (table, field1, operator, field2) {
+    if (!table || !field2) {
+      throw new Error('the arguments error')
+    }
+    this._join += `join ${makeField(table)} on ${makeField(field1)} ${operator} ${makeField(field2)} `
+  }
 
-  join () {}
-  leftJoin () {}
+  @cb()
+  leftJoin (table, field1, operator, field2) {
+    if (!table || !field2) {
+      throw new Error('the arguments error')
+    }
+    this._join += `left join ${makeField(table)} on ${makeField(field1)} ${operator} ${makeField(field2)} `
+  }
 
   @cb()
   orderBy (fields) {
@@ -73,26 +143,27 @@ export default class Builder {
     this._group = `group by ${arr.map(e => SqlString.escapeId(e)).join(', ')}`
   }
 
+  @cb()
+  having (conditions = {}) {
+    let conds = makeWhere(conditions)
 
-  having () {}
+    this._having = 'having ' + conds.join(' and ')
+  }
 
-
+  @cb()
   select (params = ['*']) {
     let fields = ''
     if (params) {
-      fields = params.map(e => {
-        return SqlString.escapeId(e.replace(/\.| +as +/ig, s => SqlString.escapeId(s)))
+      fields = params.map(field => {
+        // console.log(e, SqlString.raw('now() as now'))
+        // return SqlString.escapeId(e.replace(/\.| +as +/ig, s => SqlString.escapeId(s)))
+        return makeField(field)
       }).join(', ')
     } else {
       fields = '*'
     }
     this._fields = fields
     this._type = `select`
-
-    return {
-      toString: this.toString.bind(this),
-      exec: this.exec.bind(this)
-    }
   }
 
   @cb()
@@ -145,7 +216,7 @@ export default class Builder {
         } else {
           resolve(result, fields)
         }
-        this.connect.destroy()
+        // this.connect.destroy()
       })
     })
   }
@@ -161,9 +232,10 @@ export default class Builder {
           this._tableName,
           this._join,
           this._where,
-          this._order,
           this._group,
-          this._having
+          this._having,
+          this._order,
+          this._limit
         ]
         break
       case 'insert':
