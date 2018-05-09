@@ -196,14 +196,21 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
     }
   }, {
     key: 'select',
-    value: function select() {
-      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ['*'];
+    value: function select(args) {
+      var params = [];
+      if (Array.isArray(arguments[0])) {
+        params = arguments[0];
+      } else if (typeof arguments[0] === 'string') {
+        params = [];
+        for (var i = 0; i < arguments.length; i++) {
+          params.push(arguments[i]);
+        }
+      }
+      if (!args) params = ['*'];
 
       var fields = '';
       if (params) {
         fields = params.map(function (field) {
-          // console.log(e, SqlString.raw('now() as now'))
-          // return SqlString.escapeId(e.replace(/\.| +as +/ig, s => SqlString.escapeId(s)))
           return makeField(field);
         }).join(', ');
       } else {
@@ -215,8 +222,8 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
   }, {
     key: 'insert',
     value: function insert(arr) {
-      var data = arr;
       if ((typeof arr === 'undefined' ? 'undefined' : _typeof(arr)) !== 'object') throw new Error('The arguments must be an array or object.');
+      var data = arr;
       if (!Array.isArray(arr)) {
         data = [arr];
       }
@@ -261,8 +268,14 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
         throw new Error('Connect is undefined');
       }
       return new Promise(function (resolve, reject) {
-
-        _this.connect.query(_this.toString(), function (err, result, fields) {
+        var sql = _this.toString();
+        // console.log(sql)
+        if (Builder.log) {
+          Builder.log(sql);
+        } else {
+          process.env.NODE_ENV !== 'production' && console.log('[sql]:', sql);
+        }
+        _this.connect.query(sql, function (err, result, fields) {
           if (err) {
             reject(err);
           } else {
@@ -272,6 +285,44 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
         });
       });
     }
+  }, {
+    key: 'findAll',
+    value: function findAll(conditions) {
+      if (!conditions) {
+        this.select();
+        conditions = {};
+      }
+      var _conditions = conditions,
+          attr = _conditions.attr,
+          where = _conditions.where,
+          join = _conditions.join,
+          leftJoin = _conditions.leftJoin,
+          group = _conditions.group,
+          order = _conditions.order,
+          having = _conditions.having,
+          limit = _conditions.limit,
+          offset = _conditions.offset;
+
+
+      if (attr) this.select.apply(this, attr);
+      if (where) this.where(where);
+      if (join) this.join.apply(this, join);
+      if (leftJoin) this.leftJoin.apply(this, leftJoin);
+      if (group) this.groupBy(group);
+      if (order) this.orderBy(order);
+      if (having) this.having(having);
+      if (typeof limit !== 'undefined') {
+        this.limit(limit, offset);
+      }
+
+      return {
+        toString: this.toString.bind(this, arguments),
+        exec: this.exec.bind(this, arguments)
+      };
+    }
+  }, {
+    key: 'findOne',
+    value: function findOne() {}
   }, {
     key: 'toString',
     value: function toString(isReload) {
@@ -330,6 +381,16 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
         }
         return txt;
       });
+    }
+  }, {
+    key: 'findAll',
+    value: function findAll() {
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      if (!options.table) throw new Error('Table name is not defined');
+      var opts = { connect: options.connect };
+      var table = Builder.table(options.table, opts);
+      return table.findAll.call(table, options);
     }
   }]);
 

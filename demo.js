@@ -77,9 +77,28 @@ let sql = b.toString()
 
 console.log(sql)
 
-let sql2 = Builder.query('select * from users where name = :name', {name: 'test'})
+Builder.log = function (sql) {
+  console.log(sql)
+}
 
-console.log(sql2)// select * from users where name = 'test'
+let sql2 = Builder.findAll({
+  connect: db,
+  table: 'users',
+  attr: ['name', 'age', 'sex'],
+  order: {
+    age: 'desc'
+  },
+  limit: 20
+})
+.exec()
+.then(result => {
+  console.log(result)
+})
+.catch(err => {
+  console.log('err', err)
+})
+
+// console.log(sql2.toString())// select * from users where name = 'test'
 
 
 // let b2 = Builder.table('users', {connect: db})

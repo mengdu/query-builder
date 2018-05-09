@@ -151,12 +151,21 @@ export default class Builder {
   }
 
   @cb()
-  select (params = ['*']) {
+  select (args) {
+    let params = []
+    if (Array.isArray(arguments[0])) {
+      params = arguments[0]
+    } else if (typeof arguments[0] === 'string') {
+      params = []
+      for (let i = 0; i < arguments.length; i++) {
+        params.push(arguments[i])
+      }
+    }
+    if (!args) params = ['*']
+
     let fields = ''
     if (params) {
       fields = params.map(field => {
-        // console.log(e, SqlString.raw('now() as now'))
-        // return SqlString.escapeId(e.replace(/\.| +as +/ig, s => SqlString.escapeId(s)))
         return makeField(field)
       }).join(', ')
     } else {
@@ -168,8 +177,8 @@ export default class Builder {
 
   @cb()
   insert (arr) {
-    let data = arr
     if (typeof arr !== 'object') throw new Error('The arguments must be an array or object.')
+    let data = arr
     if (!Array.isArray(arr)) {
       data = [arr]
     }
@@ -209,8 +218,14 @@ export default class Builder {
       throw new Error('Connect is undefined')
     }
     return new Promise((resolve, reject) => {
-
-      this.connect.query(this.toString(), (err, result, fields) => {
+      let sql = this.toString()
+      // console.log(sql)
+      if (Builder.log) {
+        Builder.log(sql)
+      } else {
+        process.env.NODE_ENV !== 'production' && console.log('[sql]:', sql)
+      }
+      this.connect.query(sql, (err, result, fields) => {
         if (err) {
           reject(err)
         } else {
@@ -220,6 +235,39 @@ export default class Builder {
       })
     })
   }
+
+  findAll (conditions) {
+    if (!conditions) {
+      this.select()
+      conditions = {}
+    }
+    let {attr, where, join, leftJoin, group, order, having, limit, offset} = conditions
+
+    if (attr) this.select.apply(this, attr)
+    if (where) this.where(where)
+    if (join) this.join.apply(this, join)
+    if (leftJoin) this.leftJoin.apply(this, leftJoin)
+    if (group) this.groupBy(group)
+    if (order) this.orderBy(order)
+    if (having) this.having(having)
+    if (typeof limit !== 'undefined') {
+      this.limit(limit, offset)
+    }
+
+    return {
+      toString: this.toString.bind(this, arguments),
+      exec: this.exec.bind(this, arguments)
+    }
+  }
+
+  static findAll (options = {}) {
+    if (!options.table) throw new Error('Table name is not defined')
+    let opts = {connect: options.connect}
+    let table = Builder.table(options.table, opts)
+    return table.findAll.call(table, options)
+  }
+
+  findOne () {}
 
   toString (isReload) {
     if (this._sql && isReload) return this._sql
