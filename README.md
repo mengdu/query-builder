@@ -76,6 +76,7 @@ let sql = Builder.findAll({
   limit: 100,
   offset: 5
 })
+.toString()
 
 console.log(sql)
 // select `name`, `age`, `sex` from `users` join `posts` as `posts` on `id` = `posts`.`userId`  where `id` < 12 group by `type` having `count` >= 10 order by `age` desc limit 100 offset 5

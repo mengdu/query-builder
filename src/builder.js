@@ -223,6 +223,7 @@ export default class Builder {
     this._type = 'delete'
   }
 
+  @cb()
   findAll (conditions) {
     if (!conditions) {
       this.select()
@@ -241,7 +242,6 @@ export default class Builder {
     if (typeof limit !== 'undefined') {
       this.limit(limit, offset)
     }
-    return this.toString()
   }
 
   static findAll (options = {}) {

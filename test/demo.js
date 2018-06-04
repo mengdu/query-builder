@@ -36,6 +36,7 @@ sql = Builder.findAll({
   limit: 1,
   offset: 1
 })
+.toString()
 
 console.log(sql)
 
