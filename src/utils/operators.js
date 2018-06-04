@@ -2,15 +2,6 @@
 import SqlString from 'sqlstring'
 
 const operators = {
-  // $and: function (conds) {},
-  // $or: function (conds) {
-  //   let kvs = []
-  //   for (let key in conds) {
-  //     kvs.push(`${SqlString.escapeId(key)} = ${SqlString.escape(conds[key])}`)
-  //   }
-  //   return `or (${kvs.join(', ')})`
-  // },
-  // >
   $gt: function (val) {
     return `> ${SqlString.escape(val)}`
   },

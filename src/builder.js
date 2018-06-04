@@ -46,13 +46,13 @@ function makeField (fieldString) {
 
 export default class Builder {
 
-  constructor (options = {}) {
-    this.connect = options.connect
+  constructor () {
 
     this._tableName = ''
     this._type = ''
     this._join = ''
     this._where = ''
+    this._orWhere = ''
     this._limit = ''
     this._sql = ''
     this._order = ''
@@ -70,28 +70,31 @@ export default class Builder {
       toSql () {return sql}
     }
   }
-  static table (name, options = {}) {
+  static table (name) {
     if (!name) throw new Error('Table name is not found.')
 
-    let builder = new Builder({name, ...options})
-    builder._tableName = name
+    let builder = new Builder()
+    builder._tableName = makeField(name)
 
     return builder
   }
 
   static query (sql, params) {
     if (!params) return sql
+    let index = 0
     return sql.replace(/\:(\w+)/g, function (txt, key) {
       if (params.hasOwnProperty(key)) {
         return SqlString.escape(params[key])
       }
       return txt
+    }).replace(/\?/g, function (placeholder) {
+      return SqlString.escape(params[index++])
     })
   }
 
   @cb()
-  table (name, options = {}) {
-    this._tableName = SqlString.escapeId(name)
+  table (name) {
+    this._tableName = makeField(name)
   }
 
   @cb()
@@ -99,6 +102,13 @@ export default class Builder {
     let conds = makeWhere(conditions)
     this._where = 'where ' + conds.join(' and ')
   }
+
+  @cb()
+  orWhere (conditions = {}) {
+    if (!this._where) throw new Error('A where statement is required to use the or statement')
+    let conds = makeWhere(conditions)
+    this._orWhere = `or (${conds.join(' and ')})`
+  } 
 
   @cb()
   limit (limit = 1, offset = 0) {
@@ -213,38 +223,16 @@ export default class Builder {
     this._type = 'delete'
   }
 
-  exec () {
-    if (!this.connect) {
-      throw new Error('Connect is undefined')
-    }
-    return new Promise((resolve, reject) => {
-      let sql = this.toString()
-      // console.log(sql)
-      if (Builder.log) {
-        Builder.log(sql)
-      } else {
-        process.env.NODE_ENV !== 'production' && console.log('[sql]:', sql)
-      }
-      this.connect.query(sql, (err, result, fields) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(result, fields)
-        }
-        // this.connect.destroy()
-      })
-    })
-  }
-
   findAll (conditions) {
     if (!conditions) {
       this.select()
       conditions = {}
     }
-    let {attr, where, join, leftJoin, group, order, having, limit, offset} = conditions
-
-    if (attr) this.select.apply(this, attr)
+    let {attrs, where, orWhere, join, leftJoin, group, order, having, limit, offset} = conditions
+    attrs = attrs || ['*']
+    if (attrs) this.select.apply(this, attrs)
     if (where) this.where(where)
+    if (orWhere) this.orWhere(orWhere)
     if (join) this.join.apply(this, join)
     if (leftJoin) this.leftJoin.apply(this, leftJoin)
     if (group) this.groupBy(group)
@@ -253,21 +241,15 @@ export default class Builder {
     if (typeof limit !== 'undefined') {
       this.limit(limit, offset)
     }
-
-    return {
-      toString: this.toString.bind(this, arguments),
-      exec: this.exec.bind(this, arguments)
-    }
+    return this.toString()
   }
 
   static findAll (options = {}) {
-    if (!options.table) throw new Error('Table name is not defined')
-    let opts = {connect: options.connect}
-    let table = Builder.table(options.table, opts)
+    if (!options.table) throw new Error('options.table is not defined')
+    let table = Builder.table(options.table)
+
     return table.findAll.call(table, options)
   }
-
-  findOne () {}
 
   toString (isReload) {
     if (this._sql && isReload) return this._sql
@@ -280,6 +262,7 @@ export default class Builder {
           this._tableName,
           this._join,
           this._where,
+          this._orWhere,
           this._group,
           this._having,
           this._order,
@@ -297,7 +280,8 @@ export default class Builder {
         sqls = [
           'delete from',
           this._tableName,
-          this._where
+          this._where,
+          this._orWhere
         ]
         break
       case 'update':
@@ -305,7 +289,8 @@ export default class Builder {
           'update',
           this._tableName,
           this._update,
-          this._where
+          this._where,
+          this._orWhere
         ]
         break
     }

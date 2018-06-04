@@ -1,19 +1,32 @@
 {
-  "name": "query-builder",
+  "name": "m-query-builder",
   "version": "1.0.0",
-  "description": "",
+  "description": "A SQL query builder.",
   "main": "index.js",
   "scripts": {
     "dev": "babel src --out-dir dest -w",
-    "compile": "babel src --out-dir dest --source-maps",
+    "compile": "babel src --out-dir dest",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "https",
+    "url": "git+https://github.com/mengdu/query-builder"
+  },
+  "bugs": {
+    "url": "https://github.com/mengdu/query-builder/issues"
+  },
+  "homepage": "https://mengdu.github.io/query-builder/example/",
   "keywords": [
     "Query",
     "Builder",
     "SQL",
     "Database",
     "Select"
+  ],
+  "files": [
+    "dest",
+    "src",
+    "index.js"
   ],
   "author": "lanyueos@qq.com",
   "license": "MIT",

@@ -5,11 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = undefined;
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _dec, _dec2, _dec3, _dec4, _dec5, _dec6, _dec7, _dec8, _dec9, _dec10, _dec11, _dec12, _desc, _value, _class;
+var _dec, _dec2, _dec3, _dec4, _dec5, _dec6, _dec7, _dec8, _dec9, _dec10, _dec11, _dec12, _dec13, _desc, _value, _class;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -99,18 +97,15 @@ function makeField(fieldString) {
   return _sqlstring2.default.escapeId(chunk);
 }
 
-var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec3 = (0, _decorators.cb)(), _dec4 = (0, _decorators.cb)(), _dec5 = (0, _decorators.cb)(), _dec6 = (0, _decorators.cb)(), _dec7 = (0, _decorators.cb)(), _dec8 = (0, _decorators.cb)(), _dec9 = (0, _decorators.cb)(), _dec10 = (0, _decorators.cb)(), _dec11 = (0, _decorators.cb)(), _dec12 = (0, _decorators.cb)(), (_class = function () {
+var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec3 = (0, _decorators.cb)(), _dec4 = (0, _decorators.cb)(), _dec5 = (0, _decorators.cb)(), _dec6 = (0, _decorators.cb)(), _dec7 = (0, _decorators.cb)(), _dec8 = (0, _decorators.cb)(), _dec9 = (0, _decorators.cb)(), _dec10 = (0, _decorators.cb)(), _dec11 = (0, _decorators.cb)(), _dec12 = (0, _decorators.cb)(), _dec13 = (0, _decorators.cb)(), (_class = function () {
   function Builder() {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
     _classCallCheck(this, Builder);
-
-    this.connect = options.connect;
 
     this._tableName = '';
     this._type = '';
     this._join = '';
     this._where = '';
+    this._orWhere = '';
     this._limit = '';
     this._sql = '';
     this._order = '';
@@ -124,9 +119,7 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
   _createClass(Builder, [{
     key: 'table',
     value: function table(name) {
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-      this._tableName = _sqlstring2.default.escapeId(name);
+      this._tableName = makeField(name);
     }
   }, {
     key: 'where',
@@ -135,6 +128,15 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
 
       var conds = makeWhere(conditions);
       this._where = 'where ' + conds.join(' and ');
+    }
+  }, {
+    key: 'orWhere',
+    value: function orWhere() {
+      var conditions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+      if (!this._where) throw new Error('A where statement is required to use the or statement');
+      var conds = makeWhere(conditions);
+      this._orWhere = 'or (' + conds.join(' and ') + ')';
     }
   }, {
     key: 'limit',
@@ -260,32 +262,6 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
       this._type = 'delete';
     }
   }, {
-    key: 'exec',
-    value: function exec() {
-      var _this = this;
-
-      if (!this.connect) {
-        throw new Error('Connect is undefined');
-      }
-      return new Promise(function (resolve, reject) {
-        var sql = _this.toString();
-        // console.log(sql)
-        if (Builder.log) {
-          Builder.log(sql);
-        } else {
-          process.env.NODE_ENV !== 'production' && console.log('[sql]:', sql);
-        }
-        _this.connect.query(sql, function (err, result, fields) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(result, fields);
-          }
-          // this.connect.destroy()
-        });
-      });
-    }
-  }, {
     key: 'findAll',
     value: function findAll(conditions) {
       if (!conditions) {
@@ -293,8 +269,9 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
         conditions = {};
       }
       var _conditions = conditions,
-          attr = _conditions.attr,
+          attrs = _conditions.attrs,
           where = _conditions.where,
+          orWhere = _conditions.orWhere,
           join = _conditions.join,
           leftJoin = _conditions.leftJoin,
           group = _conditions.group,
@@ -303,9 +280,10 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
           limit = _conditions.limit,
           offset = _conditions.offset;
 
-
-      if (attr) this.select.apply(this, attr);
+      attrs = attrs || ['*'];
+      if (attrs) this.select.apply(this, attrs);
       if (where) this.where(where);
+      if (orWhere) this.orWhere(orWhere);
       if (join) this.join.apply(this, join);
       if (leftJoin) this.leftJoin.apply(this, leftJoin);
       if (group) this.groupBy(group);
@@ -314,15 +292,8 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
       if (typeof limit !== 'undefined') {
         this.limit(limit, offset);
       }
-
-      return {
-        toString: this.toString.bind(this, arguments),
-        exec: this.exec.bind(this, arguments)
-      };
+      return this.toString();
     }
-  }, {
-    key: 'findOne',
-    value: function findOne() {}
   }, {
     key: 'toString',
     value: function toString(isReload) {
@@ -331,16 +302,16 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
       var sqls = [];
       switch (this._type) {
         case 'select':
-          sqls = ['select ' + this._fields + ' from', this._tableName, this._join, this._where, this._group, this._having, this._order, this._limit];
+          sqls = ['select ' + this._fields + ' from', this._tableName, this._join, this._where, this._orWhere, this._group, this._having, this._order, this._limit];
           break;
         case 'insert':
           sqls = ['insert into', this._tableName, this._insert];
           break;
         case 'delete':
-          sqls = ['delete from', this._tableName, this._where];
+          sqls = ['delete from', this._tableName, this._where, this._orWhere];
           break;
         case 'update':
-          sqls = ['update', this._tableName, this._update, this._where];
+          sqls = ['update', this._tableName, this._update, this._where, this._orWhere];
           break;
       }
       return sqls.filter(function (e) {
@@ -362,12 +333,10 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
   }, {
     key: 'table',
     value: function table(name) {
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
       if (!name) throw new Error('Table name is not found.');
 
-      var builder = new Builder(_extends({ name: name }, options));
-      builder._tableName = name;
+      var builder = new Builder();
+      builder._tableName = makeField(name);
 
       return builder;
     }
@@ -375,11 +344,14 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
     key: 'query',
     value: function query(sql, params) {
       if (!params) return sql;
+      var index = 0;
       return sql.replace(/\:(\w+)/g, function (txt, key) {
         if (params.hasOwnProperty(key)) {
           return _sqlstring2.default.escape(params[key]);
         }
         return txt;
+      }).replace(/\?/g, function (placeholder) {
+        return _sqlstring2.default.escape(params[index++]);
       });
     }
   }, {
@@ -387,14 +359,13 @@ var Builder = (_dec = (0, _decorators.cb)(), _dec2 = (0, _decorators.cb)(), _dec
     value: function findAll() {
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-      if (!options.table) throw new Error('Table name is not defined');
-      var opts = { connect: options.connect };
-      var table = Builder.table(options.table, opts);
+      if (!options.table) throw new Error('options.table is not defined');
+      var table = Builder.table(options.table);
+
       return table.findAll.call(table, options);
     }
   }]);
 
   return Builder;
-}(), (_applyDecoratedDescriptor(_class.prototype, 'table', [_dec], Object.getOwnPropertyDescriptor(_class.prototype, 'table'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'where', [_dec2], Object.getOwnPropertyDescriptor(_class.prototype, 'where'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'limit', [_dec3], Object.getOwnPropertyDescriptor(_class.prototype, 'limit'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'join', [_dec4], Object.getOwnPropertyDescriptor(_class.prototype, 'join'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'leftJoin', [_dec5], Object.getOwnPropertyDescriptor(_class.prototype, 'leftJoin'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'orderBy', [_dec6], Object.getOwnPropertyDescriptor(_class.prototype, 'orderBy'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'groupBy', [_dec7], Object.getOwnPropertyDescriptor(_class.prototype, 'groupBy'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'having', [_dec8], Object.getOwnPropertyDescriptor(_class.prototype, 'having'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'select', [_dec9], Object.getOwnPropertyDescriptor(_class.prototype, 'select'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'insert', [_dec10], Object.getOwnPropertyDescriptor(_class.prototype, 'insert'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'update', [_dec11], Object.getOwnPropertyDescriptor(_class.prototype, 'update'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'delete', [_dec12], Object.getOwnPropertyDescriptor(_class.prototype, 'delete'), _class.prototype)), _class));
+}(), (_applyDecoratedDescriptor(_class.prototype, 'table', [_dec], Object.getOwnPropertyDescriptor(_class.prototype, 'table'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'where', [_dec2], Object.getOwnPropertyDescriptor(_class.prototype, 'where'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'orWhere', [_dec3], Object.getOwnPropertyDescriptor(_class.prototype, 'orWhere'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'limit', [_dec4], Object.getOwnPropertyDescriptor(_class.prototype, 'limit'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'join', [_dec5], Object.getOwnPropertyDescriptor(_class.prototype, 'join'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'leftJoin', [_dec6], Object.getOwnPropertyDescriptor(_class.prototype, 'leftJoin'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'orderBy', [_dec7], Object.getOwnPropertyDescriptor(_class.prototype, 'orderBy'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'groupBy', [_dec8], Object.getOwnPropertyDescriptor(_class.prototype, 'groupBy'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'having', [_dec9], Object.getOwnPropertyDescriptor(_class.prototype, 'having'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'select', [_dec10], Object.getOwnPropertyDescriptor(_class.prototype, 'select'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'insert', [_dec11], Object.getOwnPropertyDescriptor(_class.prototype, 'insert'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'update', [_dec12], Object.getOwnPropertyDescriptor(_class.prototype, 'update'), _class.prototype), _applyDecoratedDescriptor(_class.prototype, 'delete', [_dec13], Object.getOwnPropertyDescriptor(_class.prototype, 'delete'), _class.prototype)), _class));
 exports.default = Builder;
-//# sourceMappingURL=builder.js.map

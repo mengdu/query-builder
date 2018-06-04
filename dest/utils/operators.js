@@ -11,15 +11,6 @@ var _sqlstring2 = _interopRequireDefault(_sqlstring);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var operators = {
-  // $and: function (conds) {},
-  // $or: function (conds) {
-  //   let kvs = []
-  //   for (let key in conds) {
-  //     kvs.push(`${SqlString.escapeId(key)} = ${SqlString.escape(conds[key])}`)
-  //   }
-  //   return `or (${kvs.join(', ')})`
-  // },
-  // >
   $gt: function $gt(val) {
     return '> ' + _sqlstring2.default.escape(val);
   },
@@ -66,4 +57,3 @@ var operators = {
 };
 
 exports.default = operators;
-//# sourceMappingURL=operators.js.map

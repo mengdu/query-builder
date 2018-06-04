@@ -29,4 +29,3 @@ function test() {
     throw new Error('this is a test');
   };
 }
-//# sourceMappingURL=decorators.js.map
