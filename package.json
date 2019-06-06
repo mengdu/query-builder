@@ -2,10 +2,10 @@
   "name": "m-query-builder",
   "version": "1.0.1",
   "description": "A SQL query builder.",
-  "main": "index.js",
+  "main": "dest/index.js",
   "scripts": {
-    "dev": "babel src --out-dir dest -w",
-    "compile": "babel src --out-dir dest",
+    "dev": "tsc -w",
+    "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -31,10 +31,6 @@
   "author": "lanyueos@qq.com",
   "license": "MIT",
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-decorators-legacy": "^1.3.4",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-stage-2": "^6.24.1",
     "mysql": "^2.15.0"
   },
   "dependencies": {

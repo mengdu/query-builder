@@ -1,4 +1,0 @@
-{
-  "presets": [["env", {"sourceMaps": "inline"}], "stage-2"],
-  "plugins": ["transform-decorators-legacy"]
-}
