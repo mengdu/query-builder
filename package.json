@@ -31,6 +31,7 @@
   "author": "lanyueos@qq.com",
   "license": "MIT",
   "devDependencies": {
+    "@types/sqlstring": "^2.2.1",
     "mysql": "^2.15.0"
   },
   "dependencies": {
