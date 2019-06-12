@@ -36,7 +36,7 @@ export function alias (field: string, aliasName: string, isRaw?: boolean): strin
 
 export function escapeField (value: string, isRaw?: boolean): string {
   const [field, aliasName] = value.split(/\s+as\s+/)
-  return alias(field, aliasName, isRaw)
+  return aliasName ? alias(field, aliasName, isRaw) : escapeId(trim(field))
 }
 
 export function isArr (value: any): boolean {
