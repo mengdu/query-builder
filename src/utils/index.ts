@@ -42,3 +42,7 @@ export function escapeField (value: string, isRaw?: boolean): string {
 export function isArr (value: any): boolean {
   return Object.prototype.toString.call(value) === '[object Array]'
 }
+
+export function isFun (val: any): boolean {
+  return typeof val === 'function'
+}
