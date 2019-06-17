@@ -46,3 +46,13 @@ export function isArr (value: any): boolean {
 export function isFun (val: any): boolean {
   return typeof val === 'function'
 }
+
+export function isEmptyObject (val: any): boolean {
+  if (typeof val !== 'object') return false
+
+  for (const i in val) {
+    return false
+  }
+
+  return true
+}

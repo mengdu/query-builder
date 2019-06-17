@@ -96,6 +96,8 @@ export default class Builder {
   }
 
   create (data: { [key: string]: any }): Builder {
+    if (utils.isEmptyObject(data)) throw new Error('One a params `data` cannot be empty objects')
+
     this.$operType = 'insert'
     const fields = Object.keys(data)
 
