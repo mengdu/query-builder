@@ -78,8 +78,21 @@ export default class Builder {
     return this
   }
 
-  insert (data: { [key: string]: any }): Builder {
-    return this.create(data)
+  insert (data: Array<{ [key: string]: any }>): Builder {
+    if (data.length === 0) throw new Error('Array content cannot be empty')
+
+    this.$operType = 'insert'
+    const fields = Object.keys(data[0])
+    const fieldSql = [`(${fields.map(e => utils.escapeId(e)).join(',')})`]
+    const valueSql = []
+
+    for (let i in data) {
+      valueSql.push(`(${fields.map(e => utils.escape(data[i][e])).join(',')})`)
+    }
+
+    this.$insert = `${fieldSql} values${valueSql.join(',')}`
+
+    return this
   }
 
   create (data: { [key: string]: any }): Builder {
@@ -190,8 +203,7 @@ export default class Builder {
       case 'insert':
         chunks = [
           'insert into',
-          this.$tableName,
-          this.$insert
+          this.$tableName + this.$insert
         ]
         break
       case 'delete':
