@@ -8,9 +8,9 @@ export function escape (value: any): string {
   return SqlString.escape(value)
 }
 
-export function format (sql: string, args: { [ key: string  ]: any; [key: number]: any } | Array<any>): string {
+export function format (sql: string, args: { [ key: string ]: any; [key: number]: any } | Array<any>): string {
   // Support :arg and :?arg placeholder
-  const result = sql.replace(/\:\??(\w+)/g, function (txt: string, key: any) {
+  const result = sql.replace(/:\??(\w+)/g, function (txt: string, key: any) {
     if (args.hasOwnProperty(key)) {
       // :?arg use escapeId
       return txt.indexOf('?') > -1 ? escapeId(args[key]) : escape(args[key])

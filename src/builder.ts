@@ -39,7 +39,7 @@ export default class Builder {
           if (typeof this.$operators[operator] === 'function') {
             conds.push(`${utils.escapeId(key)} ${this.$operators[operator](conditions[key][operator])}`)
           } else {
-            console.warn(`The \'${operator}\' operator is not defined.`)
+            console.warn(`The '${operator}' operator is not defined.`)
           }
         }
       } else {
@@ -157,8 +157,8 @@ export default class Builder {
   }
 
   join (table: string | Builder,
-  opt: {
-    as?: string, 
+    opt: {
+    as?: string,
     direction?: string,
     on: { [key: string]: any }
   }): Builder {
@@ -229,7 +229,7 @@ export default class Builder {
 
     const sql = chunks.filter(e => !!e).join(' ')
 
-    this.$sql = (this.$operType === 'select' && alias) ? `(${sql}) as ${alias}` : sql 
+    this.$sql = (this.$operType === 'select' && alias) ? `(${sql}) as ${alias}` : sql
 
     return this.$sql
   }
