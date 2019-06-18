@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsc -w",
     "compile": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
     "lint": "eslint src --ext .js,.ts",
     "lintfix": "eslint src --fix --ext .js,.ts"
   },
@@ -33,6 +34,7 @@
   "author": "lanyueos@qq.com",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^24.0.15",
     "@types/sqlstring": "^2.2.1",
     "@typescript-eslint/eslint-plugin": "^1.10.2",
     "@typescript-eslint/parser": "^1.10.2",
@@ -42,7 +44,9 @@
     "eslint-plugin-node": "^9.1.0",
     "eslint-plugin-promise": "^4.1.1",
     "eslint-plugin-standard": "^4.0.0",
+    "jest": "^24.8.0",
     "mysql": "^2.15.0",
+    "ts-jest": "^24.0.2",
     "typescript": "^3.5.2"
   },
   "dependencies": {
