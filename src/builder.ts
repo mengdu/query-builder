@@ -130,7 +130,7 @@ export default class Builder {
 
   orWhere (conditions: { [key: string]: any }): Builder {
     if (!this.$where) throw new Error('WHERE statement does not exist and OR statement cannot be used')
-    this.$where = `or ${this.generateCondition(conditions)}`
+    this.$or = `or ${this.generateCondition(conditions)}`
     return this
   }
 
@@ -158,8 +158,8 @@ export default class Builder {
 
   join (table: string | Builder,
   opt: {
-    as: string, 
-    direction: string,
+    as?: string, 
+    direction?: string,
     on: { [key: string]: any }
   }): Builder {
     let direction = ''
