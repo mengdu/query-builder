@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsc -w",
     "compile": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src --ext .js,.ts",
+    "lintfix": "eslint src --fix --ext .js,.ts"
   },
   "repository": {
     "type": "https",
@@ -32,7 +34,16 @@
   "license": "MIT",
   "devDependencies": {
     "@types/sqlstring": "^2.2.1",
-    "mysql": "^2.15.0"
+    "@typescript-eslint/eslint-plugin": "^1.10.2",
+    "@typescript-eslint/parser": "^1.10.2",
+    "eslint": "^5.16.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.17.3",
+    "eslint-plugin-node": "^9.1.0",
+    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "mysql": "^2.15.0",
+    "typescript": "^3.5.2"
   },
   "dependencies": {
     "sqlstring": "^2.3.1"
