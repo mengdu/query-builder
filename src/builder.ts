@@ -107,10 +107,14 @@ export default class Builder {
   }
 
   update (data: { [key: string]: any }): Builder {
+    if (typeof data !== 'object' || utils.isArr(data) || utils.isEmptyObject(data)) {
+      throw new Error('One a param `data` must be an object and cannot be `Array` or `{}`')
+    }
+
     this.$operType = 'update'
     const items = []
     for (const key in data) {
-      items.push(`${utils.escapeId(key)} = ${utils.escape(data[key])}`)
+      items.push(`${utils.escapeId(key)}=${utils.escape(data[key])}`)
     }
 
     this.$update = `set ${items.join(',')}`
