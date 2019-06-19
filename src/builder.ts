@@ -3,7 +3,7 @@ import * as utils from './utils'
 import operators from './utils/operators'
 
 interface rawSqlType { toSqlString: () => string }
-type fieldAliasType = [string | rawSqlType, string | undefined]
+type fieldType = string | rawSqlType | [string | rawSqlType, string]
 
 export default class Builder {
   protected $fields: string = '';
@@ -52,21 +52,29 @@ export default class Builder {
 
   /**
    * 指定需要查询字段
-   * @param {array<string | fieldAliasType>} attrs
+   * @param {array<fieldType>} attrs
    * @returns {Builder}
    * **/
-  select (attrs: Array<string | fieldAliasType> = ['*']): Builder {
+  select (attrs: Array<fieldType> = ['*']): Builder {
+    if (!utils.isArr(attrs) || attrs.length === 0) {
+      throw new Error('One param must be Array and cannot be `[]`')
+    }
+
     this.$fields = attrs.map((field) => {
+      if (typeof field === 'object' && utils.isFun((<rawSqlType>field).toSqlString)) {
+        return (<rawSqlType>field).toSqlString()
+      }
+
       if (utils.isArr(field)) {
         let temp = ''
-        if (utils.isFun((<rawSqlType>field[0]).toSqlString)) {
-          temp += (<rawSqlType>field[0]).toSqlString()
+        if (utils.isFun((<rawSqlType>(<[rawSqlType, string]>field)[0]).toSqlString)) {
+          temp += (<rawSqlType>(<[rawSqlType, string]>field)[0]).toSqlString()
         } else {
-          temp += utils.escapeField(<string>field[0])
+          temp += utils.escapeField((<string[]>field)[0])
         }
 
-        if (field[1]) {
-          temp += ` as ${utils.escapeField(field[1])}`
+        if ((<string[]>field)[1]) {
+          temp += ` as ${utils.escapeField((<string[]>field)[1])}`
         }
         return temp
       }
