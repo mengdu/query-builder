@@ -136,17 +136,44 @@ export default class Builder {
   }
 
   where (conditions: { [key: string]: any }): Builder {
+    if (typeof conditions !== 'object' || utils.isArr(conditions)) {
+      throw new Error('One a param `conditions` must be an object and cannot be `Array`')
+    }
+
+    if (utils.isEmptyObject(conditions)) {
+      this.$where = ''
+      return this
+    }
+
     this.$where = `where ${this.generateCondition(conditions)}`
     return this
   }
 
   orWhere (conditions: { [key: string]: any }): Builder {
+    if (typeof conditions !== 'object' || utils.isArr(conditions)) {
+      throw new Error('One a param `conditions` must be an object and cannot be `Array`')
+    }
+
+    if (utils.isEmptyObject(conditions)) {
+      this.$or = ''
+      return this
+    }
+
     if (!this.$where) throw new Error('WHERE statement does not exist and OR statement cannot be used')
     this.$or = `or ${this.generateCondition(conditions)}`
     return this
   }
 
   having (conditions: { [key: string]: any }): Builder {
+    if (typeof conditions !== 'object' || utils.isArr(conditions)) {
+      throw new Error('One a param `conditions` must be an object and cannot be `Array`')
+    }
+
+    if (utils.isEmptyObject(conditions)) {
+      this.$having = ''
+      return this
+    }
+
     this.$having = `having ${this.generateCondition(conditions)}`
     return this
   }
