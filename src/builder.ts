@@ -23,6 +23,9 @@ export default class Builder {
   protected $operators: { [key: string]: any } = { ...operators };
 
   constructor (tableName: string, tableAlias: string | null = null) {
+    if (!tableName || typeof tableName !== 'string') throw new Error('`tableName` must be a string')
+    if (tableAlias && typeof tableAlias !== 'string') throw new Error('`tableAlias` must be a string')
+
     this.$tableName = tableName
     this.$tableAlias = tableAlias
   }
@@ -32,6 +35,8 @@ export default class Builder {
   }
 
   private generateCondition (conditions: { [key: string]: any }): string {
+    if (typeof conditions !== 'object') throw new Error('An argument must be object')
+
     const conds: string[] = []
     for (const key in conditions) {
       if (typeof conditions[key] === 'object' && !(conditions[key] instanceof Date)) {
@@ -87,7 +92,7 @@ export default class Builder {
   }
 
   insert (data: Array<{ [key: string]: any }>): Builder {
-    if (data.length === 0) throw new Error('Array content cannot be empty')
+    if (!utils.isArr(data) || data.length === 0) throw new Error('An argument must be Array and cannot be empty')
 
     this.$operType = 'insert'
     const fields = Object.keys(data[0])
@@ -104,7 +109,7 @@ export default class Builder {
   }
 
   create (data: { [key: string]: any }): Builder {
-    if (utils.isEmptyObject(data)) throw new Error('One a params `data` cannot be empty objects')
+    if (utils.isEmptyObject(data)) throw new Error('An argument for `data` cannot be empty object')
 
     this.$operType = 'insert'
     const fields = Object.keys(data)
@@ -116,7 +121,7 @@ export default class Builder {
 
   update (data: { [key: string]: any }): Builder {
     if (typeof data !== 'object' || utils.isArr(data) || utils.isEmptyObject(data)) {
-      throw new Error('One a param `data` must be an object and cannot be `Array` or `{}`')
+      throw new Error('An argument for `data` must be an object and cannot be `Array` or `{}`')
     }
 
     this.$operType = 'update'
@@ -137,7 +142,7 @@ export default class Builder {
 
   where (conditions: { [key: string]: any }): Builder {
     if (typeof conditions !== 'object' || utils.isArr(conditions)) {
-      throw new Error('One a param `conditions` must be an object and cannot be `Array`')
+      throw new Error('An argument for `conditions` must be an object and cannot be `Array`')
     }
 
     if (utils.isEmptyObject(conditions)) {
@@ -151,7 +156,7 @@ export default class Builder {
 
   orWhere (conditions: { [key: string]: any }): Builder {
     if (typeof conditions !== 'object' || utils.isArr(conditions)) {
-      throw new Error('One a param `conditions` must be an object and cannot be `Array`')
+      throw new Error('An argument for `conditions` must be an object and cannot be `Array`')
     }
 
     if (utils.isEmptyObject(conditions)) {
@@ -159,14 +164,15 @@ export default class Builder {
       return this
     }
 
-    if (!this.$where) throw new Error('WHERE statement does not exist and OR statement cannot be used')
+    if (!this.$where) throw new Error('Can\'t use the OR statement before WHERE statement')
+
     this.$or = `or ${this.generateCondition(conditions)}`
     return this
   }
 
   having (conditions: { [key: string]: any }): Builder {
     if (typeof conditions !== 'object' || utils.isArr(conditions)) {
-      throw new Error('One a param `conditions` must be an object and cannot be `Array`')
+      throw new Error('An argument for `conditions` must be an object and cannot be `Array`')
     }
 
     if (utils.isEmptyObject(conditions)) {
@@ -185,13 +191,13 @@ export default class Builder {
       orders.push(`${utils.escapeId(key)} ${fields[key].toLocaleLowerCase().trim() === 'desc' ? 'desc' : 'asc'}`)
     }
 
-    this.$orderBy = `order by ${orders.join(',')}`
+    this.$orderBy = orders.length > 0 ? `order by ${orders.join(',')}` : ''
 
     return this
   }
 
   group (arr: string[]): Builder {
-    this.$groupBy = `group by ${arr.map(e => utils.escapeId(e)).join(',')}`
+    this.$groupBy = arr.length > 0 ? `group by ${arr.map(e => utils.escapeId(e)).join(',')}` : ''
     return this
   }
 
@@ -218,8 +224,8 @@ export default class Builder {
     return this
   }
 
-  limit (offset: number = 0, len: number = 10): Builder {
-    this.$limit = `limit ${offset}, ${len}`
+  limit (offset: number = 0, limit: number = 10): Builder {
+    this.$limit = `limit ${+offset}, ${+limit}`
     return this
   }
 
