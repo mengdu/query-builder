@@ -4,6 +4,17 @@ import operators from './utils/operators'
 
 interface rawSqlType { toSqlString: () => string }
 type fieldType = string | rawSqlType | [string | rawSqlType, string]
+interface joinOptionType {
+  as?: string,
+  direction?: string,
+  on?: { [key: string]: any }
+}
+interface joinsOptionType {
+  table: string | Builder,
+  as?: string,
+  direction?: string,
+  on?: { [key: string]: any }
+}
 
 export default class Builder {
   protected $fields: string = '';
@@ -16,7 +27,7 @@ export default class Builder {
   protected $having: string = '';
   protected $orderBy: string = '';
   protected $groupBy: string = '';
-  protected $join: string = '';
+  protected $joins: string[] = [];
   protected $tableName: string;
   protected $tableAlias: string | null;
   protected $sql: string = '';
@@ -48,7 +59,7 @@ export default class Builder {
           }
         }
       } else {
-        conds.push(`${utils.escapeId(key)}=${utils.escape(conditions[key])}`)
+        conds.push(`${utils.escapeId(key)} = ${utils.escape(conditions[key])}`)
       }
     }
 
@@ -201,13 +212,22 @@ export default class Builder {
     return this
   }
 
-  join (table: string | Builder,
-    opt: {
-    as?: string,
-    direction?: string,
-    on: { [key: string]: any }
-  }): Builder {
+  joins (arr: joinsOptionType[]): Builder {
+    if (!utils.isArr(arr)) throw new Error('An argument for `arr` must be Array')
+
+    for (const i in arr) {
+      this.join(arr[i].table, arr[i])
+    }
+
+    return this
+  }
+
+  join (table: string | Builder, opt?: joinOptionType): Builder {
+    if (!table) throw new Error('An argument for `table` must be provided')
+
+    if (!opt) opt = {}
     let direction = ''
+
     switch (opt.direction) {
       case 'left':
         direction = 'left join'
@@ -218,8 +238,11 @@ export default class Builder {
       default:
         direction = 'join'
     }
+
     const sql = typeof table === 'string' ? utils.escapeId(table) : `(${table.toSql()})`
-    this.$join = `${direction} ${sql}${opt.as ? ' as ' + utils.escapeId(opt.as) : ''} on ${this.generateCondition(opt.on)}`
+    const onSql = opt.on ? ` on ${this.generateCondition(opt.on)}` : ''
+
+    this.$joins.push(`${direction} ${sql}${opt.as ? ' as ' + utils.escapeId(opt.as) : ''}${onSql}`)
 
     return this
   }
@@ -238,7 +261,7 @@ export default class Builder {
           `select ${this.$fields} from`,
           utils.escapeId(this.$tableName),
           this.$tableAlias ? `as ${utils.escapeId(this.$tableAlias)}` : '',
-          this.$join,
+          this.$joins.length > 0 ? this.$joins.join(' ') : '',
           this.$where,
           this.$or,
           this.$groupBy,
