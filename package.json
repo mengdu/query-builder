@@ -5,7 +5,7 @@
   "main": "dest/index.js",
   "scripts": {
     "dev": "tsc -w",
-    "compile": "tsc",
+    "compile": "rm -rf dest && tsc",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "lint": "eslint src --ext .js,.ts",
