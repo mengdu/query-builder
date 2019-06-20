@@ -1,5 +1,5 @@
 'use strict'
-import { escape } from './index'
+import { escape, escapeId } from './index'
 
 export default {
   $gt: (val: any): string => `> ${escape(val)}`,
@@ -13,5 +13,7 @@ export default {
   $in: (arr: any[]): string => `in(${arr.map(e => escape(e)).join(',')})`,
   $notIn: (arr: any[]): string => `not in(${arr.map(e => escape(e)).join(',')})`,
   $like: (val: string): string => `like ${escape(val)}`,
-  $notLike: (val: string): string => `not like ${escape(val)}`
+  $notLike: (val: string): string => `not like ${escape(val)}`,
+  $raw: (val: string): string => `= ${val}`,
+  $id: (val: string): string => `= ${escapeId(val)}`
 }
