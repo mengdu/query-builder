@@ -51,6 +51,12 @@ export default class Builder {
     const conds: string[] = []
     for (const key in conditions) {
       if (typeof conditions[key] === 'object' && !(conditions[key] instanceof Date)) {
+        // raw value
+        if (utils.isFun(conditions[key].toSqlString)) {
+          conds.push(`${utils.escapeId(key)} ${conditions[key].toSqlString()}`)
+          continue
+        }
+
         for (let operator in conditions[key]) {
           if (typeof this.$operators[operator] === 'function') {
             conds.push(`${utils.escapeId(key)} ${this.$operators[operator](conditions[key][operator])}`)
