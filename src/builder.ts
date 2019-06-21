@@ -16,6 +16,8 @@ interface joinsOptionType {
   on?: { [key: string]: any }
 }
 
+type orderType = 'DESC' | 'ASC' | 'desc' | 'asc'
+
 export default class Builder {
   protected $fields: string = '';
   protected $update: string = '';
@@ -201,11 +203,17 @@ export default class Builder {
     return this
   }
 
-  order (fields: { [key: string]: string }): Builder {
+  order (fields: { [key: string]: orderType } | Array<[string, orderType]>): Builder {
     const orders = []
 
     for (const key in fields) {
-      orders.push(`${utils.escapeId(key)} ${fields[key].toLocaleLowerCase().trim() === 'desc' ? 'desc' : 'asc'}`)
+      if (utils.isArr((<Array<[string, orderType]>>fields)[+key])) {
+        const field = utils.escapeId((<Array<[string, orderType]>>fields)[+key][0])
+        const value = (<Array<[string, orderType]>>fields)[+key][1].toLocaleLowerCase().trim() === 'desc' ? 'desc' : 'asc'
+        orders.push(`${field} ${value}`)
+      } else {
+        orders.push(`${utils.escapeId(key)} ${(<{ [key: string]: orderType }>fields)[key].toLocaleLowerCase().trim() === 'desc' ? 'desc' : 'asc'}`)
+      }
     }
 
     this.$orderBy = orders.length > 0 ? `order by ${orders.join(',')}` : ''
