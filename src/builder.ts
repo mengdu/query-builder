@@ -47,11 +47,30 @@ export default class Builder {
     return utils.raw(sql)
   }
 
-  private generateCondition (conditions: { [key: string]: any }): string {
+  private generateCondition (conditions: { [key: string]: any }, type: string = 'and'): string {
     if (typeof conditions !== 'object') throw new Error('An argument must be object')
 
     const conds: string[] = []
     for (const key in conditions) {
+      const value = conditions[key]
+
+      // support where.$and = { key: val }
+      if (key === '$and' && typeof value === 'object') {
+        conds.push(`(${this.generateCondition(value)})`)
+        continue
+      }
+
+      // support where.$or = { key: val }
+      if (key === '$or' && typeof value === 'object') {
+        conds.push(`(${this.generateCondition(value, 'or')})`)
+        continue
+      }
+  
+      if (key === '$raw' && utils.isFun(value.toSqlString)) {
+        conds.push(`(${value.toSqlString()})`)
+        continue
+      }
+
       if (typeof conditions[key] === 'object' && !(conditions[key] instanceof Date)) {
         // raw value
         if (utils.isFun(conditions[key].toSqlString)) {
@@ -71,7 +90,7 @@ export default class Builder {
       }
     }
 
-    return conds.join(' and ')
+    return conds.join(` ${type} `)
   }
 
   /**
