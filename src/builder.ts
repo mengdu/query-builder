@@ -75,8 +75,9 @@ export default class Builder {
         }
       }
   
-      if (key === '$raw' && utils.isFun(value.toSqlString)) {
-        conds.push(`(${value.toSqlString()})`)
+      // support where.$raw = 'raw'
+      if (key === '$raw') {
+        value && conds.push(utils.raw(value).toSqlString())
         continue
       }
 
