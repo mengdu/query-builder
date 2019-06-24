@@ -14,6 +14,6 @@ export default {
   $notIn: (arr: any[]): string => `not in(${arr.map(e => escape(e)).join(',')})`,
   $like: (val: string): string => `like ${escape(val)}`,
   $notLike: (val: string): string => `not like ${escape(val)}`,
-  $raw: (val: string): string => `= ${raw(val).toSqlString()}`,
+  $raw: (val: string): string => `${raw(val).toSqlString()}`,
   $id: (val: string): string => `= ${escapeId(val)}`
 }
