@@ -60,10 +60,19 @@ export default class Builder {
         continue
       }
 
-      // support where.$or = { key: val }
-      if (key === '$or' && typeof value === 'object') {
-        conds.push(`(${this.generateCondition(value, 'or')})`)
-        continue
+      // support where.$or = [{ key: val }] | {key: val}
+      if (key === '$or') {
+        if (utils.isArr(value)) {
+          const or = value.map((e: { [key: string]: any }) => {
+            const chunk = this.generateCondition(e)
+            return chunk.split(' and ').length > 1 ? `(${chunk})` : chunk
+          }).join(' or ')
+          conds.push(`(${or})`)
+          continue
+        } else if (typeof value === 'object') {
+          conds.push(`(${this.generateCondition(value, 'or')})`)
+          continue
+        }
       }
   
       if (key === '$raw' && utils.isFun(value.toSqlString)) {
