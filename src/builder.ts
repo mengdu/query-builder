@@ -291,6 +291,8 @@ export default class Builder {
         direction = 'join'
     }
 
+    if (typeof table === 'object' && !utils.isFun(table.toSql)) throw new Error('Cannot find `toSql` method')
+
     const sql = typeof table === 'string' ? utils.escapeId(table) : `(${table.toSql()})`
     const onSql = opt.on ? ` on ${this.generateCondition(opt.on)}` : ''
 
