@@ -181,7 +181,7 @@ export default class Builder {
     this.$operType = 'update'
     const items = []
     for (const key in data) {
-      items.push(`${utils.escapeId(key)}=${utils.escape(data[key])}`)
+      items.push(`${utils.escapeId(key)} = ${utils.escape(data[key])}`)
     }
 
     this.$update = `set ${items.join(',')}`
