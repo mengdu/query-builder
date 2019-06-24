@@ -328,7 +328,7 @@ export default class Builder {
       case 'delete':
         chunks = [
           'delete from',
-          this.$tableName,
+          utils.escapeId(this.$tableName),
           this.$where,
           this.$or
         ]
@@ -336,7 +336,7 @@ export default class Builder {
       case 'update':
         chunks = [
           'update',
-          this.$tableName,
+          utils.escapeId(this.$tableName),
           this.$update,
           this.$where,
           this.$or
