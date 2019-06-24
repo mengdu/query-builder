@@ -196,3 +196,158 @@ describe('test update', () => {
     expect(builder.toSql()).toBe('update `t` set `age` = 25,`name` = \'test\'')
   })
 })
+
+describe('test insert', () => {
+  test('create', () => {
+    const builder = new Builder('t')
+
+    function run () {
+      builder.create()
+    }
+
+    function run2 () {
+      builder.create({})
+    }
+
+    expect(run).toThrow()
+    expect(run2).toThrow()
+
+    builder.create({ name: 'test', age: 18, status: 1 })
+    expect(builder.toSql()).toBe('insert into t(`name`,`age`,`status`) values(\'test\',18,1)')
+  })
+
+  test('insert', () => {
+    const builder = new Builder('t')
+
+    function run () {
+      builder.insert()
+    }
+
+    function run2 () {
+      builder.insert([])
+    }
+
+    function run3 () {
+      builder.insert([{}])
+    }
+
+    expect(run).toThrow()
+    expect(run2).toThrow()
+    expect(run3).toThrow()
+
+    builder.insert([
+      { name: 'test', age: 18 },
+      { name: 'test2', age: 20 }
+    ])
+    expect(builder.toSql()).toBe('insert into t(`name`,`age`) values(\'test\',18),(\'test2\',20)')
+  })
+})
+
+describe('test limit', () => {
+  test('limit default', () => {
+    const builder = new Builder('t')
+
+    builder.select().limit()
+    expect(builder.toSql()).toBe('select `*` from `t` limit 0, 10')
+  })
+  test('limit n,m', () => {
+    const builder = new Builder('t')
+
+    builder.select().limit(10, 1000)
+    expect(builder.toSql()).toBe('select `*` from `t` limit 10, 1000')
+  })
+})
+
+describe('test order by', () => {
+  test('order { key: type }', () => {
+    const builder = new Builder('t')
+
+    builder.select().order({ age: 'DESC' })
+    expect(builder.toSql()).toBe('select `*` from `t` order by `age` desc')
+
+    builder.select().order({ age: 'DESC', name: 'ASC' })
+    expect(builder.toSql()).toBe('select `*` from `t` order by `age` desc,`name` asc')
+  })
+
+  test('order [key, type]', () => {
+    const builder = new Builder('t')
+
+    builder.select().order([['age', 'desc' ]])
+    expect(builder.toSql()).toBe('select `*` from `t` order by `age` desc')
+
+    builder.select().order([['name', 'asc'], ['age', 'desc']])
+    expect(builder.toSql()).toBe('select `*` from `t` order by `name` asc,`age` desc')
+  })
+})
+
+describe('test group by', () => {
+  test('group', () => {
+    const builder = new Builder('t')
+
+    builder.group([ 'age' ])
+    expect(builder.$groupBy).toBe('group by `age`')
+
+    builder.group([ 'age', 'id' ])
+    expect(builder.$groupBy).toBe('group by `age`,`id`')
+  })
+})
+
+describe('test join', () => {
+  test('join throw', () => {
+    const builder = new Builder('t')
+
+    function run () {
+      builder.join()
+    }
+
+    expect(run).toThrow()
+  })
+  
+  test('join("table")', () => {
+    const builder = new Builder('t')
+    builder.select().join('user')
+    expect(builder.toSql()).toBe('select `*` from `t` join `user`')
+  })
+
+  test('join("table", {on: {}})', () => {
+    const builder = new Builder('t')
+    builder.select().join('user', { on: { 'user.id': { $id: 't.id' } } })
+    expect(builder.toSql()).toBe('select `*` from `t` join `user` on `user`.`id` = `t`.`id`')
+  })
+
+  test('join("table", { on, as, direction })', () => {
+    const builder = new Builder('t')
+    builder.select().join('users', { on: { 'u.id': { $id: 't.id' } }, as: 'u', direction: 'right' })
+    expect(builder.toSql()).toBe('select `*` from `t` right join `users` as `u` on `u`.`id` = `t`.`id`')
+  })
+
+  test('join(Builder', () => {
+    const builder = new Builder('t')
+    const b2 = new Builder('users')
+    b2.select()
+
+    builder.select().join(b2)
+    expect(builder.toSql()).toBe('select `*` from `t` join (select `*` from `users`)')
+  })
+
+
+  test('join multiple', () => {
+    const builder = new Builder('t')
+    builder.select().join('test', { as: 't1', on: { 't1.status': 1 } }).join('user', { on: { 'u.id': { $id: 't.id' } }, as: 'u', direction: 'right' })
+    expect(builder.toSql()).toBe('select `*` from `t` join `test` as `t1` on `t1`.`status` = 1 right join `user` as `u` on `u`.`id` = `t`.`id`')
+  })
+
+  test('joins', () => {
+    const builder = new Builder('t')
+    builder.select().joins([{ table: 'users' }])
+    expect(builder.toSql()).toBe('select `*` from `t` join `users`')
+
+    const b2 = new Builder('t')
+    b2.select().joins([{ table: 'users1' }, { table: 'users2' }])
+    expect(b2.toSql()).toBe('select `*` from `t` join `users1` join `users2`')
+
+    const b3 = new Builder('t')
+    b3.select().joins([{ table: 'users1', as: 'u1', direction: 'left' }, { table: 'users2', as: 'u2', direction: 'right' }])
+    expect(b3.toSql()).toBe('select `*` from `t` left join `users1` as `u1` right join `users2` as `u2`')
+  })
+})
