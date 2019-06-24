@@ -66,11 +66,133 @@ describe('test where', () => {
     const builder = new Builder('test')
     builder.where({ id: 1, name: 'abc', status: true, desc: `1' or 1 = 1` })
     expect(builder.$where).toBe('where `id` = 1 and `name` = \'abc\' and `status` = true and `desc` = \'1\\\' or 1 = 1\'')
+
+    builder.where({
+      'test.id': 1
+    })
+    expect(builder.$where).toBe('where `test`.`id` = 1')
+
+    builder.where({
+      key: [1, 3, 4]
+    })
+    expect(builder.$where).toBe('where `key` in (1,3,4)')
   })
-  // test('where support operators', () => {
-  //   const builder = new Builder('test')
-  //   for (const key in builder.$operators) {
-  //     expect(!!builder.$operators[key]('test')).toBeTruthy()
-  //   }
-  // })
+
+  test('where.$and', () => {
+    const builder = new Builder('test')
+    builder.where({
+      $and: { a: 1, b: 2 }
+    })
+    expect(builder.$where).toBe('where (`a` = 1 and `b` = 2)')
+
+    builder.where({
+      test: { $lt: 2 },
+      $and: { a: 2 }
+    })
+    expect(builder.$where).toBe('where `test` < 2 and (`a` = 2)')
+  })
+
+  test('where.$or', () => {
+    const builder = new Builder('test')
+    builder.where({
+      $or: { a: 1, b: 2, $and: { c: 1 } }
+    })
+    expect(builder.$where).toBe('where (`a` = 1 or `b` = 2 or (`c` = 1))')
+
+    builder.where({
+      $or: [
+        { a: 1 },
+        { a: 2 },
+        { a: 3 }
+      ]
+    })
+    expect(builder.$where).toBe('where (`a` = 1 or `a` = 2 or `a` = 3)')
+  })
+
+  test('where.$raw', () => {
+    const builder = new Builder('test')
+    builder.where({
+      $raw: 'state = 1'
+    })
+    expect(builder.$where).toBe('where state = 1')
+
+    builder.where({
+      $raw: 'state = 1\' or 1 = 1'
+    })
+    expect(builder.$where).toBe('where state = 1\' or 1 = 1')
+  })
+
+  test('where operators', () => {
+    const builder = new Builder('test')
+    builder.where({
+      age: { $gte: 18, $lte: 35 }
+    })
+    expect(builder.$where).toBe('where `age` >= 18 and `age` <= 35')
+
+    builder.where({
+      age: { $eq: 18 },
+      status: { $neq: 0 }
+    })
+    expect(builder.$where).toBe('where `age` = 18 and `status` != 0')
+
+    builder.where({
+      age: { $between: [18, 35] },
+    })
+    expect(builder.$where).toBe('where `age` between 18 and 35')
+
+    builder.where({
+      key: { $like: 'str_%' },
+      kw: { $notLike: '%a%' }
+    })
+    expect(builder.$where).toBe('where `key` like \'str_%\' and `kw` not like \'%a%\'')
+
+    builder.where({
+      id: { $raw: '= (select id form users limit 1)' }
+    })
+    expect(builder.$where).toBe('where `id` = (select id form users limit 1)')
+
+    builder.where({
+      'user.id': { $id: 'post.userId' }
+    })
+    expect(builder.$where).toBe('where `user`.`id` = `post`.`userId`')
+  })
+})
+
+describe('test delete', () => {
+  test('delete', () => {
+    const builder = new Builder('t')
+    builder.delete()
+    expect(builder.toSql()).toBe('delete from `t`')
+    
+    builder.where({ id: 1 }).delete()
+    expect(builder.toSql()).toBe('delete from `t` where `id` = 1')
+  })
+})
+
+describe('test update', () => {
+  test('update', () => {
+    const builder = new Builder('t')
+
+    function run () {
+      builder.update()
+    }
+
+    function run2 () {
+      builder.update([])
+    }
+
+    function run3 () {
+      builder.update([])
+    }
+
+    expect(run).toThrow()
+    expect(run2).toThrow()
+    expect(run3).toThrow()
+    
+    builder.update({ age: 20 })
+    expect(builder.toSql()).toBe('update `t` set `age` = 20')
+
+    builder.update({ age: 25, name: 'test' })
+    expect(builder.toSql()).toBe('update `t` set `age` = 25,`name` = \'test\'')
+  })
 })
