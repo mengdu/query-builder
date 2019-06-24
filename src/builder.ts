@@ -81,22 +81,28 @@ export default class Builder {
         continue
       }
 
-      if (typeof conditions[key] === 'object' && !(conditions[key] instanceof Date)) {
-        // raw value
-        if (utils.isFun(conditions[key].toSqlString)) {
-          conds.push(`${utils.escapeId(key)} ${conditions[key].toSqlString()}`)
+      if (typeof value === 'object' && !(value instanceof Date)) {
+        // where.key = []
+        if (utils.isArr(value)) {
+          conds.push(`${utils.escapeId(key)} in (${value.map((e: string) => utils.escape(e)).join(',')})`)
           continue
         }
 
-        for (let operator in conditions[key]) {
+        // where.key = raw('is null')
+        if (utils.isFun(value.toSqlString)) {
+          conds.push(`${utils.escapeId(key)} ${value.toSqlString()}`)
+          continue
+        }
+
+        for (let operator in value) {
           if (typeof this.$operators[operator] === 'function') {
-            conds.push(`${utils.escapeId(key)} ${this.$operators[operator](conditions[key][operator])}`)
+            conds.push(`${utils.escapeId(key)} ${this.$operators[operator](value[operator])}`)
           } else {
             console.warn(`The '${operator}' operator is not defined.`)
           }
         }
       } else {
-        conds.push(`${utils.escapeId(key)} = ${utils.escape(conditions[key])}`)
+        conds.push(`${utils.escapeId(key)} = ${utils.escape(value)}`)
       }
     }
 
