@@ -150,6 +150,9 @@ export default class Builder {
 
     this.$operType = 'insert'
     const fields = Object.keys(data[0])
+
+    if (fields.length === 0) throw new Error('Cannot insert empty object into table')
+
     const fieldSql = [`(${fields.map(e => utils.escapeId(e)).join(',')})`]
     const valueSql = []
 
