@@ -248,7 +248,10 @@ describe('test limit', () => {
     const builder = new Builder('t')
 
     builder.select().limit()
-    expect(builder.toSql()).toBe('select `*` from `t` limit 0, 10')
+    expect(builder.toSql()).toBe('select `*` from `t` limit 1')
+
+    builder.select().limit(1000)
+    expect(builder.toSql()).toBe('select `*` from `t` limit 1000')
   })
   test('limit n,m', () => {
     const builder = new Builder('t')
