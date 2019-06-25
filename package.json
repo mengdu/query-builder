@@ -28,8 +28,7 @@
   ],
   "files": [
     "dest",
-    "src",
-    "index.js"
+    "src"
   ],
   "author": "lanyueos@qq.com",
   "license": "MIT",
