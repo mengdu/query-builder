@@ -301,8 +301,10 @@ export default class Builder {
     return this
   }
 
-  limit (offset: number = 0, limit: number = 10): Builder {
-    this.$limit = `limit ${+offset}, ${+limit}`
+  limit (offset: number = 1, limit: number): Builder {
+    if (typeof limit === 'undefined') this.$limit = `limit ${+offset}`
+    else this.$limit = `limit ${+offset}, ${+limit}`
+
     return this
   }
 
