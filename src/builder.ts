@@ -211,22 +211,6 @@ export default class Builder {
     return this
   }
 
-  orWhere (conditions: { [key: string]: any }): Builder {
-    if (typeof conditions !== 'object' || utils.isArr(conditions)) {
-      throw new Error('An argument for `conditions` must be an object and cannot be `Array`')
-    }
-
-    if (utils.isEmptyObject(conditions)) {
-      this.$or = ''
-      return this
-    }
-
-    if (!this.$where) throw new Error('Can\'t use the OR statement before WHERE statement')
-
-    this.$or = `or ${this.generateCondition(conditions)}`
-    return this
-  }
-
   having (conditions: { [key: string]: any }): Builder {
     if (typeof conditions !== 'object' || utils.isArr(conditions)) {
       throw new Error('An argument for `conditions` must be an object and cannot be `Array`')
