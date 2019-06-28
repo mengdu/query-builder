@@ -54,8 +54,16 @@ export default class Builder {
     for (const key in conditions) {
       const value = conditions[key]
 
-      // support where.$and = { key: val }
-      if (key === '$and' && typeof value === 'object') {
+      if (key === '$and' && Array.isArray(value)) {
+        // support where.$and = [{ key: val }, { key: val }]
+        const and = value.map(e => {
+          const chunk = `${this.generateCondition(e)}`
+          return chunk.split('and').length > 1 ? `(${chunk})` : chunk
+        }).join(' and ')
+        conds.push(`(${and})`)
+        continue
+      } else if (key === '$and' && typeof value === 'object') {
+        // support where.$and = { key: val }
         conds.push(`(${this.generateCondition(value)})`)
         continue
       }

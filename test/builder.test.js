@@ -90,6 +90,12 @@ describe('test where', () => {
       $and: { a: 2 }
     })
     expect(builder.$where).toBe('where `test` < 2 and (`a` = 2)')
+
+    builder.where({
+      test: { $lt: 2 },
+      $and: [{age: { $gte: 18 } }, {age: { $lte: 50 } }]
+    })
+    expect(builder.$where).toBe('where `test` < 2 and (`age` >= 18 and `age` <= 50)')
   })
 
   test('where.$or', () => {
