@@ -4,18 +4,23 @@ import operators from './utils/operators'
 
 interface rawSqlType { toSqlString: () => string }
 type fieldType = string | rawSqlType | [string | rawSqlType, string]
+type conditionType = {
+  [key: string]: any,
+  $and?: { [key: string]: any }[] | { [key: string]: any },
+  $or?: { [key: string]: any }[] | { [key: string]: any },
+  $raw?: string
+}
 interface joinOptionType {
   as?: string,
-  direction?: string,
-  on?: { [key: string]: any }
+  direction?: 'left' | 'right' | 'inner',
+  on?: conditionType
 }
 interface joinsOptionType {
   table: string | Builder,
   as?: string,
-  direction?: string,
-  on?: { [key: string]: any }
+  direction?: 'left' | 'right' | 'inner',
+  on?: conditionType
 }
-
 type orderType = 'DESC' | 'ASC' | 'desc' | 'asc'
 
 export default class Builder {
@@ -47,7 +52,7 @@ export default class Builder {
     return utils.raw(sql)
   }
 
-  private generateCondition (conditions: { [key: string]: any }, type: string = 'and'): string {
+  private generateCondition (conditions: conditionType, type: string = 'and'): string {
     if (typeof conditions !== 'object') throw new Error('An argument must be object')
 
     const conds: string[] = []
@@ -205,7 +210,7 @@ export default class Builder {
     return this
   }
 
-  where (conditions: { [key: string]: any }): Builder {
+  where (conditions: conditionType): Builder {
     if (typeof conditions !== 'object' || utils.isArr(conditions)) {
       throw new Error('An argument for `conditions` must be an object and cannot be `Array`')
     }
@@ -219,7 +224,7 @@ export default class Builder {
     return this
   }
 
-  having (conditions: { [key: string]: any }): Builder {
+  having (conditions: conditionType): Builder {
     if (typeof conditions !== 'object' || utils.isArr(conditions)) {
       throw new Error('An argument for `conditions` must be an object and cannot be `Array`')
     }
