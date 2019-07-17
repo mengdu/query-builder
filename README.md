@@ -7,99 +7,124 @@ A SQL query builder.
 ```js
 import Builder from 'm-query-builder'
 
-let sql = Builder.table('users')
+const build = new Builder('t_users', 'u')
   .select(['id', 'name', 'sex'])
   .where({
     id: 1001
   })
-  .toString()
 
-console.log(sql) // select `id`, `name`, `sex` from `users` where `id` = 1001
-
+console.log(buid.toSql()) // select `id`,`name`,`sex` from `t_users` as `u` where `id` = 1001
 ```
 
-## api
-
-原型方法
-
-+ **table(tableName)** 指定表名；返回Builder
-+ **where(conditions)** 条件
-+ **orWhere(conditions)** 条件
-+ **join(table, field1, operator, field2)** 连接查询
-+ **letJoin(table, field1, operator, field2)** 左连接
-+ **orderBy({age: 'desc'})** 排序
-+ **groupBy(['type'])** 分组
-+ **having(conditions)** having
-+ **select(['field1',...])** 列出字段
-+ **insert(arr)** 数据数组
-+ **update(obj)** 更新
-+ **delete()** 删除
-+ **toString()** 返回sql
-+ **findAll(options)** 减少连缀的方法
-
-静态方法
-
-+ **Builder.query(sql, params)** sql语句，支持 `:` 和 `?` 号占位符
-+ **Builder.raw(sql)** 用于select函数里的一些特殊查询，如果调用系统函数
-+ **Builder.table(table)** 返回Builder
-+ **Builder.findAll(options)** 减少连缀的方法
-
-**Builder.query**
+## API
 
 ```js
-let sql = Builder.query('select * from users where name = :name', {name: 'test'})
-
-console.log(sql)// select * from users where name = 'test'
+const build = new Builder(tableName [, aliasName]) // 创建一个sql构建；注：toSql后，对象不能重复使用
 ```
 
-**Builder.findAll**
++ **Builder.prototype.select([attrs])** 指定需要查询字段，默认 `['*']`
 
 ```js
-let sql = Builder.findAll({
-  table: 'users',
-  join: ['posts as posts', 'id', '=', 'posts.userId'],
-  attrs: ['name', 'age', 'sex'],
-  where: {
-    id: {
-      $lt: 12
-    }
-  },
-  order: {
-    age: 'desc'
-  },
-  group: ['type'],
-  having: {
-    count: {
-      $gte: 10
-    }
-  },
-  limit: 100,
-  offset: 5
-})
-.toString()
-
-console.log(sql)
-// select `name`, `age`, `sex` from `users` join `posts` as `posts` on `id` = `posts`.`userId`  where `id` < 12 group by `type` having `count` >= 10 order by `age` desc limit 100 offset 5
+build.select() // `*`
+build.select(['u.userId', 'id', 'name']) // `u`.`userId`,`id`,`name`
 ```
 
-## operators
-
-支持以下操作符
-
-+ $gt
-+ $gte
-+ $lt
-+ $lte
-+ $eq
-+ $ne
-+ $between
-+ $notBetween
-+ $in
-+ $notIn
-+ $like
-+ $notLike
-
++ **Builder.prototype.insert(data: Array<{ [key: string]: any }>)** 插入多条数据
 
 ```js
-Builder.table('users').where({id: {$gt: 100}}).select().toString()
+build.insert([
+  { name: 'zhangsan', age: 24 },
+  { name: 'lisi', age: 23 }
+]) // insert into table(`name`, `age`) values('zhangsan', 24),('lisi', 23)
+```
+
++ **Builder.prototype.create(data: { [key: string]: any })** 插入一条数据
+
+```js
+build.create({ name: 'zhangsan', age: 24 }) // insert into table(`name`, `age`) values('zhangsan', 24)
+```
+
++ **Builder.prototype.update(data: { [key: string]: any })** 更新数据，条件需要连缀 `where` 方法增加条件
+
++ **Builder.prototype.delete()** 删除数据，条件需要连缀 `where` 方法
+
++ **Builder.prototype.where(conditions: conditionType)** 条件
++ **Builder.prototype.having(conditions: conditionType)** having 条件
+
+**conditionType** 定义如下
+
+```ts
+type conditionType = {
+  [key: string]: any,
+  $and?: { [key: string]: any }[] | { [key: string]: any },
+  $or?: { [key: string]: any }[] | { [key: string]: any },
+  $raw?: string
+}
+```
+
+```js
+build.where({ status: 1, age: { $in: [18, 20, 25] } }) // where `status` = 1 and age in (18,20,25)
+
+build.where({
+  $and: [
+    { age: { $gte: 18 } },
+    { age: { $lte: 30 } }
+  ]
+}) // where `age` >= 18 and `age` <= 30
+```
+
++ **Builder.prototype.order(fields: { [key: string]: orderType | Array<[string, orderType])** 排序
+
+```js
+build.order({ createdAt: 'desc', score: 'asc' }) // order by `createdAt` desc, `asc` asc
+build.order([ ['createdAt', 'desc'], [ 'score', 'asc' ] ]) // order by `createdAt` desc, `asc` asc
+```
+
++ **Builder.prototype.join(table: string | Builder, opt?: joinOptionType)** 连表查询，支持多次调用
++ **Builder.prototype.joins(arr: joinsOptionType[])** 连表查询，参数为数组
+
+```ts
+interface joinsOptionType {
+  table: string | Builder,
+  as?: string,
+  direction?: 'left' | 'right' | 'inner',
+  on?: conditionType
+}
+
+interface joinOptionType {
+  as?: string,
+  direction?: 'left' | 'right' | 'inner',
+  on?: conditionType
+}
+```
+
+```js
+build.join('t_orders', {
+  as: 'o',
+  direction: 'left',
+  on: { 'o.userId': { $id: 'u.id' } }
+}) // left join `t_orders` as o on `o`.`userId` = `u`.`id`
+```
+
++ **Builder.prototype.limit(offset: number = 1, limit: number)** 取部分
++ **Builder.prototype.toSql(alias?: string)** 生成sql
+
+
+## 操作符
+
+```c
+$gt: 10 // > 10
+$gte: 10 // >= 10
+$lt: 10 // < 10
+$lte: 10 // <= 10
+$eq: 10 // = 10
+$neq: 10 // != 10
+$between: [18, 30] // between 18 and 30 
+$notBetween: [18, 30] // not between 18 and 30 
+$in: [1, 3, 5, 7] // in(1,3,5,7)
+$notIn: [1, 3, 5, 7] // not in(1,3,5,7)
+$like: 'ab%c' // like 'ab%c'
+$notLike: 'ab%c' // not like 'ab%c'
+$raw: 'is not null' // is not null
+$id: 'u.userId' // = `u`.`userId`
 ```
