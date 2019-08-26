@@ -1,7 +1,7 @@
 import SqlString from 'sqlstring'
 
 export function escapeId (value: string, dotQualifier?: boolean) : string {
-  return SqlString.escapeId(value, dotQualifier)
+  return SqlString.escapeId(value, dotQualifier).replace(/`\*`/, '*')
 }
 
 export function escape (value: any): string {
